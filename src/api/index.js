@@ -1,8 +1,7 @@
-let router = require('express').Router();
-let controller = require('./controller');
+const router = require('express').Router()
+const controller = require('./controller')
 
+router.post('/subscribe/:topic', controller.subscribe)
+router.post('/publish/:topic', controller.publish)
 
-router.post('/subscribe/:topic', controller.subscribe);
-router.post('/publish/:topic', controller.publish);
-
-module.exports = router;
+module.exports = router

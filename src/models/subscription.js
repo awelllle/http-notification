@@ -1,13 +1,11 @@
+const mongoose = require('mongoose')
 
-'use strict';
-const mongoose = require('mongoose'),
-    Schema = mongoose.Schema;
+const { Schema } = mongoose
 
-let SubscriptionSchema = new Schema({
-    
-    url: String,
-    topic: String,
-    created: {type: Date, require:true, default: Date.now}
-});
+const SubscriptionSchema = new Schema({
+  url: String,
+  topic: String,
+  created: { type: Date, require: true, default: Date.now }
+})
 
-module.exports = mongoose.model('Subscription', SubscriptionSchema);
+module.exports = mongoose.model('Subscription', SubscriptionSchema)

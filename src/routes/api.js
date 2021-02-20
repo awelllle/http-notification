@@ -1,7 +1,6 @@
-const apiBase = '../api';
+const apiBase = '../api'
 
 module.exports = function (app) {
-    // API routes
-    app.use('/', require(`${apiBase}/index`));
-   
-};
+  // API routes
+  app.use('/', require(`${apiBase}/index`))
+}

@@ -1,13 +1,11 @@
+const mongoose = require('mongoose')
 
-'use strict';
-const mongoose = require('mongoose'),
-    Schema = mongoose.Schema;
+const { Schema } = mongoose
 
-let PurchaseSchema = new Schema({
-    
-    prodId: String,
-    qty: String,  
-    created: {type: Date, require:true, default: Date.now}
-});
+const PurchaseSchema = new Schema({
+  prodId: String,
+  qty: String,
+  created: { type: Date, require: true, default: Date.now }
+})
 
-module.exports = mongoose.model('Purchase', PurchaseSchema);
+module.exports = mongoose.model('Purchase', PurchaseSchema)
