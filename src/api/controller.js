@@ -1,4 +1,4 @@
-const {validParam, sendErrorResponse, sendSuccessResponse, trimCollection} = require('../helpers/utility');
+const {validParam, sendErrorResponse, sendSuccessResponse, trimCollection, queueTask} = require('../helpers/utility');
 const mongoose = require('mongoose');
 const Sub = mongoose.model('Subscription');
 
@@ -40,17 +40,21 @@ exports.subscribe = (req, res) =>{
 }
 
 
-
 exports.publish = (req, res) =>{
 
     const {topic} = req.params
-
+    
     Sub.findOne({topic: topic}, function (err, result) {
         if (err) {
             return sendErrorResponse(res, {err}, 'Something went wrong');
         }
-       
-            console.log(result, "result")
+            const payload = {
+                topic: result.topic,
+                url: result.url,
+                data : req.body
+            }
+            queueTask('pubs', payload);
+            return sendSuccessResponse(res, {}, 'Publish was successful!');
         
         });
 

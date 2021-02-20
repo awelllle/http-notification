@@ -1,7 +1,6 @@
 
 const request = require('request');
-const jwt  = require('jsonwebtoken');
-
+var amqp = require('amqplib');
 
 exports.sendJsonResponse = function (res, status, content) {
     res.status(status).json(content);
@@ -24,16 +23,7 @@ exports.sendSuccessResponse = function (res, content, message) {
     res.status(200).json(data);
 };
 
-exports.generateToken =  (payload) => {
-    
 
-   
-    const  options = { expiresIn: '2d'};
-    const  secret  = process.env.JWT_SECRET;
-    const  token   = jwt.sign(payload, secret, options);
-    return token;
-
-};
 
 exports.generateCode = (l) => {
 
@@ -81,18 +71,17 @@ exports.validParam = (obj, requiredParam) => {
     };
 };
 
-exports.sendPostRequest = (data,token, path) => {
+exports.sendPostRequest = (data, path) => {
 
-    const appUrl = process.env.APP_URL;
     let response = '';
 
-    let authRequest = request.post({
-        url: `${appUrl}${path}`,
+    let pRequest = request.post({
+        url: `${path}`,
         body: data,
         json: true,
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token
+           
         }
 
     }, function(error, res, body){
@@ -102,16 +91,16 @@ exports.sendPostRequest = (data,token, path) => {
         }
     });
 
-    authRequest.on('data', (data) => {
+    pRequest.on('data', (data) => {
         response += data;
     });
 
-    authRequest.on('end', () => {
+    pRequest.on('end', () => {
         try {
             let data = JSON.parse(response);
             console.log(data);
             if (data.success) {
-                return (null, data.data);
+                return (null, data);
             }
         } catch (e) {
             //todo: log error to sentry
@@ -121,83 +110,6 @@ exports.sendPostRequest = (data,token, path) => {
     });
 };
 
-exports.sendPutRequest = (data,token, path, cb) => {
-
-    const authUrl = process.env.AUTH_URL;
-    let response = '';
-
-    let authRequest = request.put({
-        url: `${authUrl}${path}`,
-        body: data,
-        json: true,
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token
-        }
-
-    }, function(error, res, body){
-        if(error){
-            console.log(error);
-            cb(error, body);
-        }
-    });
-
-    authRequest.on('data', (data) => {
-        response += data;
-    });
-
-    authRequest.on('end', () => {
-        try {
-            let data = JSON.parse(response);
-            console.log(data);
-            if (data.success) {
-                return cb(null, data.data);
-            }
-        } catch (e) {
-            //todo: log error to sentry
-            console.log(e);
-        }
-        cb(true, data);
-    });
-};
-
-exports.sendGetRequest = (data,token, path, cb) => {
-
-    const authUrl = process.env.AUTH_URL;
-    let response = '';
-
-    let authRequest = request.get({
-        url: `${authUrl}${path}`,
-        qs: data,
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token
-        }
-
-    }, function(error, res, body){
-        if(error){
-            console.log(error);
-            cb(error, body);
-        }
-    });
-
-    authRequest.on('data', (data) => {
-        response += data;
-    });
-
-    authRequest.on('end', () => {
-        try {
-            let data = JSON.parse(response);
-            if (data.success) {
-                return cb(null, data.data);
-            }
-        } catch (e) {
-            //todo: log error to sentry
-            console.log(e);
-        }
-        return cb(true, data.message);
-    });
-};
 
 exports.trimCollection = (data) => {
     for(let key in data){
@@ -210,31 +122,24 @@ exports.trimCollection = (data) => {
     return data;
 };
 
-exports.authenticate = (token, cb) => { //This function authenticates all the micro services
-  
-    if(token !== "" ){ //Token shouldn't be empty, but just incase it is
 
-       
-        jwt.verify(token, process.env.JWT_SECRET, function(err, decoded) {
-            if(err){
-                return cb('Token is either Invalid or has expired', null);
-            }else{
-               
-                console.log(decoded, "Token decoded");
-                return cb(null, decoded);
-               
-            }
-          });
-    }else {
-        return cb('No Authorisation header', null);
-    }
+
+
+exports.queueTask = (channel, data) => {
+    let body = JSON.stringify(data);
+    const open = amqp.connect(process.env.RABBITMQ);
+    open.then((conn) => {
+        return conn.createChannel();
+    }).then((ch) => {
+
+    return ch.assertQueue(channel).then(function(ok) {
+        ch.sendToQueue(channel, Buffer.from(body));
+        console.log(" [x] Sent %s", body);
+        return ch.close();
+    });
+
+    }).catch(console.warn);
+   
+
 };
 
-
-exports.capitalize = (str) => {
-    if(str.length > 0){
-        let temp = str.substr(1);
-        str = str.charAt(0).toUpperCase() + temp;
-    }
-    return str;
-}

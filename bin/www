@@ -5,6 +5,44 @@
 
 var app = require('../server');
 var http = require('http');
+const {sendPostRequest } = require('../src/helpers/utility')
+
+var open = require('amqplib').connect(process.env.RABBITMQ);
+let queue = 'pubs';
+
+open.then(function(conn) {
+  return conn.createChannel();
+}).then(function(ch) {
+  return ch.assertQueue(queue).then(function(ok) {
+    return ch.consume(queue, function(msg) {
+
+      if (msg !== null) {
+
+          let stringMessage = msg.content.toString();
+          let jsonMessage =  JSON.parse(stringMessage);
+         
+          let data = {
+              data: jsonMessage.data,
+              topic: jsonMessage.topic
+          };
+
+
+          let path = jsonMessage.url
+
+          sendPostRequest(data, path, (err, data) => {
+            if(err) {    
+              console.log(err);
+            }
+            ch.ack(msg);
+            console.log(data, "data")          
+          });     
+      }
+    }, { noAck: false });
+    
+  });
+  
+}).catch(console.warn);
+
 
 /**
  * Get port from environment and store in Express.
