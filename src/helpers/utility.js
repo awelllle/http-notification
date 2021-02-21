@@ -68,7 +68,6 @@ exports.validParam = (obj, requiredParam) => {
 
 exports.sendPostRequest = (data, path) => {
   let response = ''
-
   const pRequest = request.post(
     {
       url: `${path}`,
@@ -92,11 +91,7 @@ exports.sendPostRequest = (data, path) => {
 
   pRequest.on('end', () => {
     try {
-      const data = JSON.parse(response)
-      console.log(data)
-      if (data.success) {
-        return null, data
-      }
+      return null, data
     } catch (e) {
       // todo: log error to sentry
       console.log(e)

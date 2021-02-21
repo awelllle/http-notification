@@ -42,16 +42,20 @@ exports.subscribe = (req, res) => {
 exports.publish = (req, res) => {
   const { topic } = req.params
 
-  Sub.findOne({ topic }, function (err, result) {
+  Sub.find({ topic }, function (err, result) {
     if (err) {
       return sendErrorResponse(res, { err }, 'Something went wrong')
     }
-    const payload = {
-      topic: result.topic,
-      url: result.url,
-      data: req.body
+
+    for (const key in result) {
+      const payload = {
+        topic: result[key].topic,
+        url: result[key].url,
+        data: req.body
+      }
+      queueTask('pubs', payload)
     }
-    queueTask('pubs', payload)
+
     return sendSuccessResponse(res, {}, 'Publish was successful!')
   })
 }

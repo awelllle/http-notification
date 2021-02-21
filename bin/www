@@ -28,14 +28,15 @@ open.then(function(conn) {
 
 
           let path = jsonMessage.url
-
+            
           sendPostRequest(data, path, (err, data) => {
             if(err) {    
               console.log(err);
-            }
-            ch.ack(msg);
-            console.log(data, "data")          
-          });     
+            } 
+            
+          });    
+          ch.ack(msg);
+
       }
     }, { noAck: false });
     
